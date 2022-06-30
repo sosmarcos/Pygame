@@ -1,0 +1,24 @@
+pygame.init() é necessario para que funcionem os módulos
+
+==========================================================
+import pygame
+from pygame.locals import *
+
+pygame.init()
+ventana = pygame.display.set_mode((400,300))
+pygame.display.set_caption('Hola Mundo')
+
+while True:
+    for evento in pygame.event.get():
+        if evento.type == QUIT:
+            pygame.quit()
+
+    pygame.display.update()   <<---------------------|
+                                                     |
+Este código é basico para uma interface com pygame --|
+
+=========================================================
+
+cor = pygame.Color(60, 80, 150)
+pygame.draw.line(ventana, cor, (60, 80), (160, 100), 8)
+parâmetros(display, cor, inicio da linha, fim da linha, largura)
