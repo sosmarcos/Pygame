@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 
-pygame.display.set_caption('Cores em pygame')
+pygame.display.set_caption('Carregando imagens em pygame')
 ventana = pygame.display.set_mode((500,300))
 
   # load() serve para carregar arquivos

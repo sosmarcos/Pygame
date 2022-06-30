@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 
-pygame.display.set_caption('Cores em pygame')
+pygame.display.set_caption('Linhas em pygame')
 ventana = pygame.display.set_mode((400,300))
 
 cor = pygame.Color(60, 80, 150)

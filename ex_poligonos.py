@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 
-pygame.display.set_caption('Cores em pygame')
+pygame.display.set_caption('Poligonos em pygame')
 ventana = pygame.display.set_mode((400,300))
 
 pygame.draw.circle(ventana, (8, 70, 120), (80, 90), 20)

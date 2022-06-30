@@ -1,7 +1,7 @@
 import pygame
 from pygame.locals import *
 
-pygame.display.set_caption('Cores em pygame')
+pygame.display.set_caption('Animações em pygame')
 ventana = pygame.display.set_mode((700,300))
 
 

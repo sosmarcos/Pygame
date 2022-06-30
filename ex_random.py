@@ -2,7 +2,7 @@ import pygame
 from pygame.locals import *
 from random import randint
 
-pygame.display.set_caption('Cores em pygame')
+pygame.display.set_caption('Randomizando posições em pygame')
 ventana = pygame.display.set_mode((500,300))
 
   # load() serve para carregar arquivos
