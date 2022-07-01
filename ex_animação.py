@@ -4,7 +4,6 @@ from pygame.locals import *
 pygame.display.set_caption('Animações em pygame')
 ventana = pygame.display.set_mode((700,300))
 
-
 imagem = pygame.image.load('Opus_cruz.png')
 posX = 0
 posY = 0
