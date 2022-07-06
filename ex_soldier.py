@@ -1,3 +1,4 @@
+from re import X
 import pygame
 from pygame.locals import *
 
@@ -18,26 +19,29 @@ class Animação:
     def on(self, tempo, sujeito=None):
         if tempo%self.fluides == 0:
             self.frame += 1
-            if self.frame == self.quadros and self.Y:
+            
+            # se o frame for igual a quantidade de quadros e ouver deslocação vertical
+            if self.frame == self.quadros and self.Y:  
                 self.ativo = False
+                self.frame = 1
                 
                 if self.X == 0:
                     sujeito.repouso = True
                 else:
                     self.X = 0
 
+            # se o frame for maior que a quantidade de quadros
             elif self.frame > self.quadros:
                 self.frame = 1
                 
-            global posX, posY
-            posX += self.X
+            sujeito.X += self.X
+            
+            # para deslocar o personagem verticalmente com pulo e queda
             if self.frame <= self.quadros//2:
-                posY += self.Y
-                print(self.Y)
+                sujeito.Y += self.Y                  
                 
             elif self.quadros > self.frame > self.quadros//2:
-                posY += (self.Y - (self.Y + self.Y))
-                print(self.Y - (self.Y + self.Y))
+                sujeito.Y += (self.Y - (self.Y + self.Y))
             
         global window
         quadro = arial.render(f'Frame: {self.frame}', 0, (255, 255, 255))
@@ -47,20 +51,22 @@ class Animação:
 
 
 class Personagem:
-    def __init__(self, nome, alinhamento='esquerda'):
+    def __init__(self, nome, coordenada, alinhamento='esquerda'):
         self.nome = nome
+        self.X = coordenada[0]
+        self.Y = coordenada[1]
         self.alinhamento = alinhamento
         self.repouso = True
         self.imagem = pygame.image.load(f'sprits/{self.nome}_parado_esquerda_1.png')
         self.esquerda = {
             'parado': Animação(f'sprits/{self.nome}_parado_esquerda_', 7, (0, 0), 90),
             'correndo': Animação(f'sprits/{self.nome}_esquerda_', 12, (-2, 0), 30),
-            'pulo': Animação(f'sprits/{self.nome}_pulo_esquerda_', 9, (0, -4), 30)
+            'pulo': Animação(f'sprits/{self.nome}_pulo_esquerda_', 9, (0, -4), 40)
         }
         self.direita = {
             'parado': Animação(f'sprits/{self.nome}_parado_direita_', 7, (0, 0), 90),
             'correndo': Animação(f'sprits/{self.nome}_direita_', 12, (2, 0), 30),
-            'pulo': Animação(f'sprits/{self.nome}_pulo_direita_', 9, (0, -4), 30)
+            'pulo': Animação(f'sprits/{self.nome}_pulo_direita_', 9, (0, -4), 40)
         }
 
 
@@ -68,27 +74,22 @@ pygame.display.set_caption('Animação em pygame')
 window = pygame.display.set_mode((1000, 400))
 
 arial = pygame.font.SysFont('Arial', 10)
-soldier = Personagem('Soldier')
-
-fluides = 30
-posX = 970
-posY = 200
-desloc = 2
+soldier = Personagem('Soldier', (970, 200))
 
 while True:
     tempo = int(pygame.time.get_ticks())
     relogio = arial.render(f'Tempo: {tempo/100}', 0, (255, 255, 255))
     direção = arial.render(f'Alinhamento a {soldier.alinhamento}', 0, (255, 255, 255))
-    coordX = arial.render(f'Eixo X: {posX}', 0, (255,255,255))
-    coordY = arial.render(f'Eixo Y: {posY}', 0, (255,255,255))
+    coordX = arial.render(f'Eixo X: {soldier.X}', 0, (255,255,255))
+    coordY = arial.render(f'Eixo Y: {soldier.Y}', 0, (255,255,255))
 
-    window.fill((0, 0, 0))
+    
  
     if soldier.esquerda['correndo'].ativo and not soldier.esquerda['pulo'].ativo:
-        soldier.imagem = soldier.esquerda["correndo"].on(tempo)
+        soldier.imagem = soldier.esquerda["correndo"].on(tempo, soldier)
 
     elif soldier.direita['correndo'].ativo and not soldier.direita['pulo'].ativo:
-        soldier.imagem = soldier.direita['correndo'].on(tempo)
+        soldier.imagem = soldier.direita['correndo'].on(tempo, soldier)
 
     elif soldier.esquerda['pulo'].ativo:
         soldier.imagem = soldier.esquerda['pulo'].on(tempo, soldier)
@@ -98,14 +99,13 @@ while True:
 
     if soldier.repouso:
         if soldier.alinhamento == 'esquerda':
-            soldier.imagem = soldier.esquerda["parado"].on(tempo)
+            soldier.imagem = soldier.esquerda["parado"].on(tempo, soldier)
         else:
-            soldier.imagem = soldier.direita['parado'].on(tempo)
+            soldier.imagem = soldier.direita['parado'].on(tempo, soldier)
             
-
+    window.fill((0, 0, 0))
     pygame.draw.line(window, (20, 20, 20), (0, 243), (1000, 243), 4)
-    
-    window.blit(soldier.imagem, (posX, posY))
+    window.blit(soldier.imagem, (soldier.X, soldier.Y))
     window.blit(relogio, (10, 20))
     window.blit(direção, (10, 33))
     window.blit(coordX, (10, 46))
@@ -115,19 +115,23 @@ while True:
         if event.type == QUIT:
             pygame.quit()
 
-        elif event.type == pygame.KEYDOWN:  # se uma tecla for precionada
-            if event.key == K_a and not soldier.direita['correndo'].ativo:  # se a tecla for A e não D
+        elif event.type == pygame.KEYDOWN:  # se uma tecla for precionada 
+            
+            # se a tecla for A e não D
+            if event.key == K_a and not soldier.direita['correndo'].ativo and not soldier.direita['pulo'].ativo:
                 soldier.esquerda['correndo'].ativo = True
                 
                 soldier.repouso = False
                 soldier.alinhamento = 'esquerda'
 
-            elif event.key == K_d and not soldier.esquerda['correndo'].ativo:  # se a tecla for D e não A
+            # se a tecla for D e não A
+            elif event.key == K_d and not soldier.esquerda['correndo'].ativo and not soldier.esquerda['pulo'].ativo:  
                 soldier.direita['correndo'].ativo = True
 
                 soldier.repouso = False
                 soldier.alinhamento = 'direita'
 
+            # se a tecla for W
             elif event.key == K_w:
                 if soldier.alinhamento == 'esquerda':
                     if not soldier.repouso:
