@@ -1,4 +1,5 @@
 from re import X
+from tkinter import W
 import pygame
 from pygame.locals import *
 
@@ -17,12 +18,15 @@ class Animação:
 
 
     def on(self, tempo, sujeito=None):
+        global tecla, window
+
         if tempo%self.fluides == 0:
             self.frame += 1
             
             # se o frame for igual a quantidade de quadros e ouver deslocação vertical
             if self.frame == self.quadros and self.Y:  
                 self.ativo = False
+                tecla['W'] = False
                 self.frame = 1
                 
                 if self.X == 0:
@@ -32,18 +36,28 @@ class Animação:
 
             # se o frame for maior que a quantidade de quadros
             elif self.frame > self.quadros:
-                self.frame = 1
+                if tecla['Q']:
+                    self.frame = 3
+                else:
+                    if sujeito.ocupado:
+                        self.ativo = False
+                        sujeito.ocupado = False
+                        sujeito.repouso = True
+                    
+                    self.frame = 1
                 
             sujeito.X += self.X
+            sujeito.caixa.left += self.X
             
             # para deslocar o personagem verticalmente com pulo e queda
             if self.frame <= self.quadros//2:
-                sujeito.Y += self.Y                  
+                sujeito.Y += self.Y 
+                sujeito.caixa.top += self.Y                 
                 
             elif self.quadros > self.frame > self.quadros//2:
                 sujeito.Y += (self.Y - (self.Y + self.Y))
+                sujeito.caixa.top += (self.Y - (self.Y + self.Y))
             
-        global window
         quadro = arial.render(f'Frame: {self.frame}', 0, (255, 255, 255))
         window.blit(quadro, (10, 72))
 
@@ -57,103 +71,207 @@ class Personagem:
         self.Y = coordenada[1]
         self.alinhamento = alinhamento
         self.repouso = True
+        self.ocupado = False
         self.imagem = pygame.image.load(f'sprits/{self.nome}_parado_esquerda_1.png')
-        self.esquerda = {
-            'parado': Animação(f'sprits/{self.nome}_parado_esquerda_', 7, (0, 0), 90),
-            'correndo': Animação(f'sprits/{self.nome}_esquerda_', 12, (-2, 0), 30),
-            'pulo': Animação(f'sprits/{self.nome}_pulo_esquerda_', 9, (0, -4), 40)
-        }
-        self.direita = {
-            'parado': Animação(f'sprits/{self.nome}_parado_direita_', 7, (0, 0), 90),
-            'correndo': Animação(f'sprits/{self.nome}_direita_', 12, (2, 0), 30),
-            'pulo': Animação(f'sprits/{self.nome}_pulo_direita_', 9, (0, -4), 40)
-        }
+        self.caixa = pygame.Rect(self.X, self.Y, self.imagem.get_width(), self.imagem.get_height())
+        self.esquerda = dict()
+        self.direita = dict()
+
+        
+    def animar(self, correr=False, pular=False, apontar=False):
+        global tecla
+
+        if correr and not self.ocupado:
+            if self.esquerda['correndo'].ativo and not tecla['W']:
+                self.imagem = self.esquerda["correndo"].on(tempo, self)
+
+            elif self.direita['correndo'].ativo and not tecla['W']:
+                self.imagem = self.direita['correndo'].on(tempo, self)
+
+        if pular:
+            if self.esquerda['pulo'].ativo:
+                self.imagem = self.esquerda['pulo'].on(tempo, self)
+
+            elif self.direita['pulo'].ativo:
+                self.imagem = self.direita['pulo'].on(tempo, self)
+
+        if apontar:
+            if self.esquerda['apontando'].ativo:
+                self.imagem = self.esquerda['apontando'].on(tempo, self)
+            
+            elif self.direita['apontando'].ativo:
+                self.imagem = self.direita['apontando'].on(tempo, self)
+
+            if self.esquerda['disparando'].ativo:
+                self.imagem = self.esquerda['disparando'].on(tempo, self)
+            
+            elif self.direita['disparando'].ativo:
+                self.imagem = self.direita['disparando'].on(tempo, self)
+
+        if self.repouso:
+            if self.alinhamento == 'esquerda':
+                self.imagem = self.esquerda["parado"].on(tempo, self)
+            else:
+                self.imagem = self.direita['parado'].on(tempo, self)
 
 
 pygame.display.set_caption('Animação em pygame')
 window = pygame.display.set_mode((1000, 400))
 
+transparencia = pygame.Color(0, 0, 0, 0)
 arial = pygame.font.SysFont('Arial', 10)
 soldier = Personagem('Soldier', (970, 200))
+rifleman = Personagem('Rifleman', (500, 193))
+tecla = {
+    'A': False,
+    'D': False,
+    'W': False,
+    'Q': False
+}
+  # ============================================|Animações para o rifleman alinhado a esquerda|============================================
+rifleman.esquerda['parado'] = Animação(f'sprits/{rifleman.nome}_parado_esquerda_', 4, (0, 0), 90)
+rifleman.esquerda['correndo'] = Animação(f'sprits/{rifleman.nome}_esquerda_', 12, (-3, 0), 20)
+rifleman.esquerda['apontando'] = Animação(f'sprits/{rifleman.nome}_apontando_esquerda_', 3, (0, 0), 90)
+rifleman.esquerda['disparando'] = Animação(f'sprits/{rifleman.nome}_disparo_esquerda_', 17, (0, 0), 50)
+rifleman.esquerda['pulo'] = False
 
-while True:
-    tempo = int(pygame.time.get_ticks())
-    relogio = arial.render(f'Tempo: {tempo/100}', 0, (255, 255, 255))
-    direção = arial.render(f'Alinhamento a {soldier.alinhamento}', 0, (255, 255, 255))
-    coordX = arial.render(f'Eixo X: {soldier.X}', 0, (255,255,255))
-    coordY = arial.render(f'Eixo Y: {soldier.Y}', 0, (255,255,255))
-
-    
+  # ============================================|Animações para o rifleman alinhado a direita|============================================
+rifleman.direita['parado'] = Animação(f'sprits/{rifleman.nome}_parado_direita_', 4, (0, 0), 90)
+rifleman.direita['correndo'] = Animação(f'sprits/{rifleman.nome}_direita_', 12, (3, 0), 20)
+rifleman.direita['apontando'] = Animação(f'sprits/{rifleman.nome}_apontando_direita_', 3, (0, 0), 90)
+rifleman.direita['disparando'] = Animação(f'sprits/{rifleman.nome}_disparo_direita_', 17, (0, 0), 50)
+rifleman.direita['pulo'] = False
  
-    if soldier.esquerda['correndo'].ativo and not soldier.esquerda['pulo'].ativo:
-        soldier.imagem = soldier.esquerda["correndo"].on(tempo, soldier)
+  # ============================================|Animações para o soldier alinhado a esquerda|============================================
+soldier.esquerda['parado'] = Animação(f'sprits/{soldier.nome}_parado_esquerda_', 7, (0, 0), 50)
+soldier.esquerda['correndo'] = Animação(f'sprits/{soldier.nome}_esquerda_', 12, (-2, 0), 20)
+soldier.esquerda['apontando'] = False
+soldier.esquerda['pulo'] = Animação(f'sprits/{soldier.nome}_pulo_esquerda_', 9, (0, -4), 30)
 
-    elif soldier.direita['correndo'].ativo and not soldier.direita['pulo'].ativo:
-        soldier.imagem = soldier.direita['correndo'].on(tempo, soldier)
+  # ============================================|Animações para o soldier alinhado a direita|============================================
+soldier.direita['parado'] = Animação(f'sprits/{soldier.nome}_parado_direita_', 7, (0, 0), 50)
+soldier.direita['correndo'] = Animação(f'sprits/{soldier.nome}_direita_', 12, (2, 0), 20)
+soldier.direita['apontando'] = False
+soldier.direita['pulo'] = Animação(f'sprits/{soldier.nome}_pulo_direita_', 9, (0, -4), 30)
 
-    elif soldier.esquerda['pulo'].ativo:
-        soldier.imagem = soldier.esquerda['pulo'].on(tempo, soldier)
+controle = soldier
+while True:
+    tempo = int(pygame.time.get_ticks()/2)
+    relogio = arial.render(f'Tempo: {tempo/100}', 0, (255, 255, 255))
+    direção = arial.render(f'Alinhamento a {controle.alinhamento}', 0, (255, 255, 255))
+    coordX = arial.render(f'Eixo X: {controle.X}', 0, (255,255,255))
+    coordY = arial.render(f'Eixo Y: {controle.Y}', 0, (255,255,255))
+    seleção = arial.render(f'Personagem: {controle.nome}', 0, (255, 255, 255))
 
-    elif soldier.direita['pulo'].ativo:
-        soldier.imagem = soldier.direita['pulo'].on(tempo, soldier)
-
-    if soldier.repouso:
-        if soldier.alinhamento == 'esquerda':
-            soldier.imagem = soldier.esquerda["parado"].on(tempo, soldier)
-        else:
-            soldier.imagem = soldier.direita['parado'].on(tempo, soldier)
+    soldier.animar(correr=True, pular=True)
+    rifleman.animar(correr=True, apontar=True)
             
+    pygame.draw.rect(window, transparencia, soldier.caixa)
+    pygame.draw.rect(window, transparencia, rifleman.caixa)
+
     window.fill((0, 0, 0))
     pygame.draw.line(window, (20, 20, 20), (0, 243), (1000, 243), 4)
+    
+    window.blit(rifleman.imagem, (rifleman.X, rifleman.Y))
     window.blit(soldier.imagem, (soldier.X, soldier.Y))
+
     window.blit(relogio, (10, 20))
     window.blit(direção, (10, 33))
     window.blit(coordX, (10, 46))
     window.blit(coordY, (10, 59))
+    window.blit(seleção, (10, 82))
     
     for event in pygame.event.get():
         if event.type == QUIT:
             pygame.quit()
 
-        elif event.type == pygame.KEYDOWN:  # se uma tecla for precionada 
-            
-            # se a tecla for A e não D
-            if event.key == K_a and not soldier.direita['correndo'].ativo and not soldier.direita['pulo'].ativo:
-                soldier.esquerda['correndo'].ativo = True
+  # ===================================================|Se uma tecla for precionada|=================================================== 
+        elif event.type == pygame.KEYDOWN:  
+        
+            # se a tecla for A
+            if event.key == K_a and not tecla['D'] and not tecla['W'] and not tecla['Q'] and not controle.ocupado:
+                tecla['A'] = True
+                controle.esquerda['correndo'].ativo = True
                 
-                soldier.repouso = False
-                soldier.alinhamento = 'esquerda'
+                controle.repouso = False
+                controle.alinhamento = 'esquerda'
 
-            # se a tecla for D e não A
-            elif event.key == K_d and not soldier.esquerda['correndo'].ativo and not soldier.esquerda['pulo'].ativo:  
-                soldier.direita['correndo'].ativo = True
+            # se a tecla for D
+            elif event.key == K_d and not tecla['A'] and not tecla['W'] and not tecla['Q'] and not controle.ocupado:  
+                tecla['D'] = True
+                controle.direita['correndo'].ativo = True
 
-                soldier.repouso = False
-                soldier.alinhamento = 'direita'
+                controle.repouso = False
+                controle.alinhamento = 'direita'
 
             # se a tecla for W
-            elif event.key == K_w:
-                if soldier.alinhamento == 'esquerda':
-                    if not soldier.repouso:
-                        soldier.esquerda['pulo'].X = -3
+            elif event.key == K_w and controle.esquerda['pulo'] and not controle.ocupado:
+                tecla['W'] = True
+
+                if controle.alinhamento == 'esquerda':
+                    if controle.esquerda['pulo'] and not controle.repouso:
+                        controle.esquerda['pulo'].X = -3
                         
-                    soldier.esquerda['pulo'].ativo = True
+                    controle.esquerda['pulo'].ativo = True
                                 
                 else:
-                    if not soldier.repouso:
-                        soldier.direita['pulo'].X = 3
+                    if not controle.repouso:
+                        controle.direita['pulo'].X = 3
 
-                    soldier.direita['pulo'].ativo = True
+                    controle.direita['pulo'].ativo = True
 
-                soldier.repouso = False
+                controle.repouso = False
+            
+            # se a tecla for o shift esquerdo
+            elif event.key == K_q and controle.esquerda['apontando'] and not tecla['W']:
+                if controle.alinhamento == 'esquerda':
+                    controle.esquerda['apontando'].ativo = True
+                    if tecla['A']:
+                        controle.esquerda['correndo'].ativo = False
 
-        elif event.type == pygame.KEYUP:  # se uma tecla for solta
-            if event.key == K_a and not soldier.direita['correndo'].ativo:
-                soldier.esquerda['correndo'].ativo = False
-                soldier.repouso = True
+                else:
+                    controle.direita['apontando'].ativo = True
+                    if tecla['D']:
+                        controle.direita['correndo'].ativo = False
 
-            elif event.key == K_d and not soldier.esquerda['correndo'].ativo:
-                soldier.direita['correndo'].ativo = False
-                soldier.repouso = True
+                tecla['Q'] = True
+                controle.repouso = False
+
+            elif event.key == K_e and tecla['Q']:
+                if controle.alinhamento == 'esquerda':
+                    controle.esquerda['disparando'].ativo = True
+                    controle.esquerda['apontando'].ativo = False
+                else:
+                    controle.direita['disparando'].ativo = True
+                    controle.direita['apontando'].ativo = False
+                
+                controle.ocupado = True
+                tecla['Q'] = False
+
+  # =====================================================|Se uma tecla for solta|=======================================================
+        elif event.type == pygame.KEYUP:  
+            if event.key == K_a and not controle.direita['correndo'].ativo and not tecla['Q']:
+                tecla['A'] = False
+                controle.esquerda['correndo'].ativo = False
+                controle.repouso = True
+
+            elif event.key == K_d and not controle.esquerda['correndo'].ativo and not tecla['Q']:
+                tecla['D'] = False
+                controle.direita['correndo'].ativo = False
+                controle.repouso = True
+
+            elif event.key == K_q and controle.esquerda['apontando'] and tecla['Q']:
+                controle.esquerda['apontando'].ativo = False
+                controle.direita['apontando'].ativo = False
+                tecla['Q'] = False
+                controle.repouso = True
+
+  # ==============================================|Se o botão do mouse for presionado|==============================================
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if soldier.caixa.collidepoint(pygame.mouse.get_pos()):
+                controle = soldier
+
+            elif rifleman.caixa.collidepoint(pygame.mouse.get_pos()):
+                controle = rifleman
 
     pygame.display.update()
