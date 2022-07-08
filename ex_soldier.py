@@ -18,7 +18,7 @@ class Animação:
 
 
     def on(self, tempo, sujeito=None):
-        global tecla, window
+        global tecla, superficie
 
         if tempo%self.fluides == 0:
             self.frame += 1
@@ -59,7 +59,7 @@ class Animação:
                 sujeito.caixa.top += (self.Y - (self.Y + self.Y))
             
         quadro = arial.render(f'Frame: {self.frame}', 0, (255, 255, 255))
-        window.blit(quadro, (10, 72))
+        superficie.blit(quadro, (10, 282))
 
         return pygame.image.load(f'{self.imagem}{self.frame}.png')
 
@@ -117,11 +117,12 @@ class Personagem:
 
 pygame.display.set_caption('Animação em pygame')
 window = pygame.display.set_mode((1000, 400))
+superficie = pygame.Surface((1000, 400))
 
 transparencia = pygame.Color(0, 0, 0, 0)
 arial = pygame.font.SysFont('Arial', 10)
-soldier = Personagem('Soldier', (970, 200))
-rifleman = Personagem('Rifleman', (500, 193))
+soldier = Personagem('Soldier', (970, 170))
+rifleman = Personagem('Rifleman', (500, 161))
 tecla = {
     'A': False,
     'D': False,
@@ -129,34 +130,34 @@ tecla = {
     'Q': False
 }
   # ============================================|Animações para o rifleman alinhado a esquerda|============================================
-rifleman.esquerda['parado'] = Animação(f'sprits/{rifleman.nome}_parado_esquerda_', 4, (0, 0), 90)
-rifleman.esquerda['correndo'] = Animação(f'sprits/{rifleman.nome}_esquerda_', 12, (-3, 0), 20)
-rifleman.esquerda['apontando'] = Animação(f'sprits/{rifleman.nome}_apontando_esquerda_', 3, (0, 0), 90)
-rifleman.esquerda['disparando'] = Animação(f'sprits/{rifleman.nome}_disparo_esquerda_', 17, (0, 0), 50)
+rifleman.esquerda['parado'] = Animação(f'sprits/{rifleman.nome}_parado_esquerda_', 4, (0, 0), 20)
+rifleman.esquerda['correndo'] = Animação(f'sprits/{rifleman.nome}_esquerda_', 12, (-3, 0), 4)
+rifleman.esquerda['apontando'] = Animação(f'sprits/{rifleman.nome}_apontando_esquerda_', 3, (0, 0), 20)
+rifleman.esquerda['disparando'] = Animação(f'sprits/{rifleman.nome}_disparo_esquerda_', 17, (0, 0), 8)
 rifleman.esquerda['pulo'] = False
 
   # ============================================|Animações para o rifleman alinhado a direita|============================================
-rifleman.direita['parado'] = Animação(f'sprits/{rifleman.nome}_parado_direita_', 4, (0, 0), 90)
-rifleman.direita['correndo'] = Animação(f'sprits/{rifleman.nome}_direita_', 12, (3, 0), 20)
-rifleman.direita['apontando'] = Animação(f'sprits/{rifleman.nome}_apontando_direita_', 3, (0, 0), 90)
-rifleman.direita['disparando'] = Animação(f'sprits/{rifleman.nome}_disparo_direita_', 17, (0, 0), 50)
+rifleman.direita['parado'] = Animação(f'sprits/{rifleman.nome}_parado_direita_', 4, (0, 0), 20)
+rifleman.direita['correndo'] = Animação(f'sprits/{rifleman.nome}_direita_', 12, (3, 0), 4)
+rifleman.direita['apontando'] = Animação(f'sprits/{rifleman.nome}_apontando_direita_', 3, (0, 0),20)
+rifleman.direita['disparando'] = Animação(f'sprits/{rifleman.nome}_disparo_direita_', 17, (0, 0), 8)
 rifleman.direita['pulo'] = False
  
   # ============================================|Animações para o soldier alinhado a esquerda|============================================
-soldier.esquerda['parado'] = Animação(f'sprits/{soldier.nome}_parado_esquerda_', 7, (0, 0), 50)
-soldier.esquerda['correndo'] = Animação(f'sprits/{soldier.nome}_esquerda_', 12, (-2, 0), 20)
+soldier.esquerda['parado'] = Animação(f'sprits/{soldier.nome}_parado_esquerda_', 7, (0, 0), 20)
+soldier.esquerda['correndo'] = Animação(f'sprits/{soldier.nome}_esquerda_', 12, (-2, 0), 4)
 soldier.esquerda['apontando'] = False
-soldier.esquerda['pulo'] = Animação(f'sprits/{soldier.nome}_pulo_esquerda_', 9, (0, -4), 30)
+soldier.esquerda['pulo'] = Animação(f'sprits/{soldier.nome}_pulo_esquerda_', 9, (0, -4), 6)
 
   # ============================================|Animações para o soldier alinhado a direita|============================================
-soldier.direita['parado'] = Animação(f'sprits/{soldier.nome}_parado_direita_', 7, (0, 0), 50)
-soldier.direita['correndo'] = Animação(f'sprits/{soldier.nome}_direita_', 12, (2, 0), 20)
+soldier.direita['parado'] = Animação(f'sprits/{soldier.nome}_parado_direita_', 7, (0, 0), 20)
+soldier.direita['correndo'] = Animação(f'sprits/{soldier.nome}_direita_', 12, (2, 0), 4)
 soldier.direita['apontando'] = False
-soldier.direita['pulo'] = Animação(f'sprits/{soldier.nome}_pulo_direita_', 9, (0, -4), 30)
+soldier.direita['pulo'] = Animação(f'sprits/{soldier.nome}_pulo_direita_', 9, (0, -4), 6)
 
 controle = soldier
 while True:
-    tempo = int(pygame.time.get_ticks()/2)
+    tempo = int(pygame.time.get_ticks())
     relogio = arial.render(f'Tempo: {tempo/100}', 0, (255, 255, 255))
     direção = arial.render(f'Alinhamento a {controle.alinhamento}', 0, (255, 255, 255))
     coordX = arial.render(f'Eixo X: {controle.X}', 0, (255,255,255))
@@ -166,20 +167,22 @@ while True:
     soldier.animar(correr=True, pular=True)
     rifleman.animar(correr=True, apontar=True)
             
-    pygame.draw.rect(window, transparencia, soldier.caixa)
-    pygame.draw.rect(window, transparencia, rifleman.caixa)
+    window.blit(superficie, (0, 0))
+  
+    pygame.draw.rect(superficie, transparencia, soldier.caixa)
+    pygame.draw.rect(superficie, transparencia, rifleman.caixa)
 
-    window.fill((0, 0, 0))
-    pygame.draw.line(window, (20, 20, 20), (0, 243), (1000, 243), 4)
+    superficie.blit(pygame.image.load('sprits/Fundo_1.png'), (0, 0))
     
-    window.blit(rifleman.imagem, (rifleman.X, rifleman.Y))
-    window.blit(soldier.imagem, (soldier.X, soldier.Y))
+    superficie.blit(rifleman.imagem, (rifleman.X, rifleman.Y))
+    superficie.blit(soldier.imagem, (soldier.X, soldier.Y))
+    superficie.blit(pygame.image.load('sprits/Arvore_1.png'), (435, 0))
 
-    window.blit(relogio, (10, 20))
-    window.blit(direção, (10, 33))
-    window.blit(coordX, (10, 46))
-    window.blit(coordY, (10, 59))
-    window.blit(seleção, (10, 82))
+    window.blit(relogio, (10, 230))
+    window.blit(direção, (10, 243))
+    window.blit(coordX, (10, 256))
+    window.blit(coordY, (10, 269))
+    window.blit(seleção, (10, 292))
     
     for event in pygame.event.get():
         if event.type == QUIT:
